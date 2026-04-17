@@ -3,6 +3,7 @@ import app from "./src/app.js";
 import { Server } from "socket.io";
 import { initSockets } from "./src/sockets/index.js";
 import "./src/config/redis.js"
+import "dotenv/config"
 
 const server = http.createServer(app);
 const io = new Server(server, {
