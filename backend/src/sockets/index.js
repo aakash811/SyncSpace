@@ -5,5 +5,7 @@ export const initSockets = (io) => {
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
     });
+
+    require("./board.socket.js").initBoardSocket(io, socket);
   });
 };
