@@ -10,6 +10,7 @@ const io = new Server(server, {
         origin: "*",
     },
 });
+
 initSockets(io);
 
 global.io = io;
