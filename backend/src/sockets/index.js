@@ -1,3 +1,5 @@
+import { initBoardSocket } from "./board.socket.js";
+
 export const initSockets = (io) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
@@ -6,6 +8,6 @@ export const initSockets = (io) => {
       console.log("User disconnected:", socket.id);
     });
 
-    require("./board.socket.js").initBoardSocket(io, socket);
+    initBoardSocket(io, socket);
   });
 };

@@ -1,8 +1,21 @@
+import prisma from "../config/db.js";
+import { handleStateUpdate } from "./handlers/state.handler.js";
+
 export const initBoardSocket = (io, socket) => {
-    // Join a board room
-    socket.on("JOIN_BOARD", ({boardId}) => {
-        socket.join(boardId);
-        console.log(`Socket ${socket.id} joined board ${boardId}`);
+        // Join a board room
+        socket.on("JOIN_BOARD", async ({boardId}) => {
+            socket.join(boardId);
+            console.log(`Socket ${socket.id} joined board ${boardId}`);
+
+        try{
+            const board = await prisma.board.findUnique({
+                where: {id: boardId},
+            })
+            
+            socket.emit("BOARD_STATE", board?.state || {});
+        } catch (err) {
+            console.error("Error fetching board state:", err);
+        }
     });
 
     // Leave a board room
@@ -12,7 +25,5 @@ export const initBoardSocket = (io, socket) => {
     })
 
     // Events
-    require("./handlers/text.handler.js").handleTextEvent(io, socket);
-    require("./handlers/draw.handler.js").handleDrawEvent(io, socket);
-    require("./handlers/code.handler.js").handleCodeEvent(io, socket);
+    handleStateUpdate(io, socket);
 }
