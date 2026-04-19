@@ -23,6 +23,7 @@ export default function Toolbar() {
         <button onClick={() => setTool("rect")}>⬛</button>
         <button onClick={() => setTool("circle")}>⚪</button>
         <button onClick={() => setTool("select")}>🖱️</button>
+        <button onClick={() => setTool("eraser")}>🩹</button>
 
         {/* Actions */}
         <button onClick={undo}>↩️</button>

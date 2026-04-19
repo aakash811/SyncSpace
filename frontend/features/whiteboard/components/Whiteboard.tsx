@@ -6,6 +6,7 @@ import { useSocketSync } from "../hooks/useSocketSync";
 import { getSocket } from "@/lib/socket";
 import { useState } from "react";
 import { Shape } from "../types";
+import { emit } from "process";
 
 export default function Whiteboard() {
   const socket = getSocket();
@@ -18,16 +19,39 @@ export default function Whiteboard() {
   const setShapes = useWhiteboardStore((state) => state.setShapes);
 
   const [isDrawing, setIsDrawing] = useState(false);
+  const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
 
   useSocketSync(boardId);
+
+  let emitTimeout: any;
+  const emitUpdate = (data: any) => {
+    if (emitTimeout) return;
+
+    emitTimeout = setTimeout(() => {
+      socket.emit("STATE_UPDATE", data);
+      emitTimeout = null;
+    }, 50); // 20 FPS-ish
+  };
 
   // ✏️ START DRAWING
   const handleMouseDown = (e: any) => {
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
 
+    if(tool === "select"){
+      return;
+    }
+
+    if(tool === "eraser"){
+      const clickedShape = e.target;
+
+      const index = shapes.findIndex((shape, i) => {
+        return clickedShape === e.target;
+      })
+    }
+    setIsDrawing(true);
+
     if(tool === "pen"){
-      setIsDrawing(true);
 
       const newLine: Shape = {
         tool: "pen",
@@ -40,40 +64,30 @@ export default function Whiteboard() {
     }
       
 
-    if(tool === "rect"){
-      const newRect: Shape = {
-        tool: "rect",
-        x: pos.x,
-        y: pos.y,
-        width: 100,
-        height: 100,
-        fill: color,
-      };
+    if(tool === "rect" || tool === "circle"){
+      setStartPos({ x: pos.x, y: pos.y });
 
-      const updatedShapes = [...shapes, newRect];
-      setShapes(updatedShapes);
+      const newShape: Shape = 
+        tool === "rect" ? { 
+          tool: "rect",
+          x: pos.x,
+          y: pos.y,
+          width: 0,
+          height: 0,
+          fill: color,
+        }:
+        {
+          tool: "circle",
+          x: pos.x,
+          y: pos.y,
+          radius: 0,
+          fill: color,
+        };
 
-      socket.emit("STATE_UPDATE", {
-        boardId,
-        state: {
-          shapes: updatedShapes
-        },
-      });
-    }
+        const updatedShapes = [...shapes, newShape];
+        setShapes(updatedShapes);
 
-    if(tool === "circle"){
-      const newCircle: Shape = {
-        tool: "circle",
-        x: pos.x,
-        y: pos.y,
-        radius: 50,
-        fill: color,
-      };
-
-      const updatedShapes = [...shapes, newCircle];
-      setShapes(updatedShapes);
-
-      socket.emit("STATE_UPDATE", {
+      emitUpdate({
         boardId,
         state: {
           shapes: updatedShapes
@@ -85,32 +99,102 @@ export default function Whiteboard() {
 
   // ✏️ DRAWING IN PROGRESS
   const handleMouseMove = (e: any) => {
-    if (!isDrawing || tool !== "pen") return;
+    if (!isDrawing) return;
 
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
 
     const lastShape = shapes[shapes.length - 1];
-    if (!lastShape || lastShape.tool !== "pen") return;
+    if (!lastShape) return;
 
-    const updatedLine = {
-      ...lastShape,
-      points: [...lastShape.points, point.x, point.y],
-    };
+    //PEN TOOL
+    if(tool === "pen" && lastShape.tool === "pen") {
+      const updatedLine: Shape = {
+        ...lastShape,
+        points: [...lastShape.points, point.x, point.y],
+      };
+      
+      const updatedShapes = [...shapes.slice(0, -1), updatedLine];
+      setShapes(updatedShapes);
+      return;
+    }
 
-    const updatedShapes = [...shapes.slice(0, -1), updatedLine];
+    //RECTANGLE TOOL
+    if(tool === "rect" && lastShape.tool === "rect" && startPos) {
+      const updatedRect: Shape = {
+        ...lastShape,
+        width: point.x - startPos.x,
+        height: point.y - startPos.y,
+      };
 
-    setShapes(updatedShapes);
+      const updatedShapes = [...shapes.slice(0, -1), updatedRect];
+      setShapes(updatedShapes);
+      return;
+    }
 
-    socket.emit("STATE_UPDATE", {
-      boardId,
-      state: { shapes: updatedShapes },
-    });
+    //CIRCLE TOOL
+    if(tool === "circle" && lastShape.tool === "circle" && startPos) {
+      const radius = Math.sqrt(
+        Math.pow(point.x - startPos.x, 2) + 
+        Math.pow(point.y - startPos.y, 2)
+      );
+
+      const updatedCircle: Shape = {
+        ...lastShape,
+        radius,
+      }
+
+      const updatedShapes = [...shapes.slice(0, -1), updatedCircle];
+      setShapes(updatedShapes);
+      return;
+    }
   };
 
   // ✏️ END DRAWING
   const handleMouseUp = () => {
     setIsDrawing(false);
+    setStartPos(null);
+
+    emitUpdate({
+      boardId,
+      state: { shapes },
+    });
+  };
+
+  const handleDragEnd = (e: any, index: number) => {
+    const {x, y} = e.target.position();
+
+    const updatedShapes = shapes.map((shape, i) => {
+      if(i !== index) return shape;
+
+      return {
+        ...shape,
+        x, 
+        y,
+      };
+    });
+
+    setShapes(updatedShapes);
+
+    socket.emit("STATE_UPDATE", {
+      boardId,
+      state: { shapes: updatedShapes},
+    });
+  };
+
+  const handleErase = (index: number) => {
+    if(tool !== "eraser"){
+      return;
+    }
+
+    const updatedShapes = shapes.filter((_, i) => i !== index);
+
+    setShapes(updatedShapes);
+
+    emitUpdate({
+      boardId,
+      state: { shapes: updatedShapes},
+    });
   };
 
   return (
@@ -133,14 +217,30 @@ export default function Whiteboard() {
               strokeWidth={shape.strokeWidth}
               tension={0.5}
               lineCap="round"
+              onClick={() => handleErase(i)}
               />
             );
           }
           if(shape.tool === "circle") {
-            return <Circle key={i} {...shape} />
+            return (
+            <Circle 
+              key={i} 
+              {...shape} 
+              draggable={tool === "select"}
+              onDragEnd={(e) => handleDragEnd(e, i)}
+              onClick={() => handleErase(i)}
+            />
+            );
           }
-
-          return <Rect key={i} {...shape} />
+          return (
+            <Rect 
+              key={i} 
+              {...shape} 
+              draggable={tool === "select"} 
+              onDragEnd={(e) => handleDragEnd(e, i)}
+              onClick={() => handleErase(i)}
+            />
+          );
         })}
       </Layer>
     </Stage>
