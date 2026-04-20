@@ -6,9 +6,10 @@ import { useAuthStore } from "@/features/auth/hooks/useAuthStore";
 import Whiteboard from "@/features/whiteboard/components/Whiteboard";
 import Toolbar from "@/features/whiteboard/components/Toolbar";
 import CodeEditor from "@/features/code-editor/components/CodeEditor";
-import { PenLine, Code2, ArrowLeft } from "lucide-react";
+import TextEditor from "@/features/text-editor/components/TextEditor";
+import { PenLine, Code2, ArrowLeft, FileText } from "lucide-react";
 
-type Tab = "whiteboard" | "code";
+type Tab = "whiteboard" | "code" | "notes";
 
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -60,6 +61,17 @@ export default function BoardPage() {
             <Code2 size={16} />
             Code
           </button>
+          <button
+            onClick={() => setActiveTab("notes")}
+            className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
+              activeTab === "notes"
+                ? "bg-primary-container text-on-primary-container shadow-sm"
+                : "text-on-surface-muted hover:text-on-surface"
+            }`}
+          >
+            <FileText size={16} />
+            Notes
+          </button>
         </div>
 
         <div className="w-24" /> {/* Spacer for centering */}
@@ -74,6 +86,7 @@ export default function BoardPage() {
           </>
         )}
         {activeTab === "code" && <CodeEditor boardId={boardId} />}
+        {activeTab === "notes" && <TextEditor boardId={boardId} />}
       </div>
     </div>
   );

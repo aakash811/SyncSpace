@@ -1,6 +1,7 @@
 import prisma from "../config/db.js";
 import { handleStateUpdate } from "./handlers/state.handler.js";
 import { handleCodeUpdate } from "./handlers/code.handler.js";
+import { handleTextUpdate } from "./handlers/text.handler.js";
 
 export const initBoardSocket = (io, socket) => {
         // Join a board room
@@ -28,4 +29,5 @@ export const initBoardSocket = (io, socket) => {
     // Events
     handleStateUpdate(io, socket);
     handleCodeUpdate(io, socket);
+    handleTextUpdate(io, socket);
 }
