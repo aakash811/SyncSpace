@@ -1,3 +1,406 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-background:                  #131318;
+  --color-surface:                     #131318;
+  --color-surface-container-lowest:    #0e0e13;
+  --color-surface-container-low:       #1b1b20;
+  --color-surface-container:           #1f1f25;
+  --color-surface-container-high:      #2a292f;
+  --color-surface-container-highest:   #36343c;
+
+  --color-primary:                     #cabeff;
+  --color-primary-container:           #947dff;
+  --color-on-primary:                  #1e0086;
+  --color-inverse-primary:             #613de0;
+
+  --color-secondary:                   #cac4d9;
+  --color-secondary-container:         #4a4458;
+  --color-on-secondary:                #322f40;
+  --color-on-secondary-container:      #e7dff8;
+
+  --color-tertiary:                    #efb8c8;
+  --color-tertiary-container:          #633b48;
+  --color-on-tertiary:                 #3b0921;
+  --color-on-tertiary-container:       #ffd9e3;
+
+  --color-on-primary-container:        #e8deff;
+  --color-inverse-primary:             #613de0; 
+
+  --color-error:                       #ffb4ab;
+  --color-error-container:             #93000a;
+  --color-warning:                     #ffb95f;
+  --color-warning-container:           #7a4300;
+  --color-success:                     #6fd98d;
+  --color-success-container:           #0a4f28;
+
+  --color-on-surface:                  #e4e1e9;
+  --color-on-surface-variant:          #c9c4d8;
+  --color-on-surface-muted:            #8f8a9d;
+  --color-on-surface-subtle:           #5c5870;
+
+  --color-outline:                     #948f9f;
+  --color-outline-variant:             #484555;
+
+  --color-status-live:                 #6fd98d;
+  --color-status-offline:              #5c5870;
+  --color-status-syncing:              #ffb95f;
+
+  --color-role-owner-text:             #a78bfa;
+  --color-role-editor-text:            #7dd3fc;
+  --color-role-viewer-text:            #94a3b8;
+
+  --color-collab-1:                    #7c5cfc;
+  --color-collab-2:                    #e879a0;
+  --color-collab-3:                    #38bdf8;
+  --color-collab-4:                    #34d399;
+  --color-collab-5:                    #fbbf24;
+  --color-collab-6:                    #f97316;
+
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+}
+
+/* keep your :root { } block below for the CSS variables 
+   that Tailwind doesn't need to know about (shadows, glass, etc.) */
+
+:root {
+
+  /* ──────────────────────────────────────────────
+     SURFACE HIERARCHY  ("Obsidian Glass" layers)
+     ────────────────────────────────────────────── */
+
+  --background:                  #131318;   /* Base Layer  — infinite canvas          */
+  --surface:                     #131318;   /* Alias for background                   */
+  --surface-container-lowest:    #0e0e13;   /* Navigation panel / deepest inset       */
+  --surface-container-low:       #1b1b20;   /* Sunken areas — search bars, code blocks */
+  --surface-container:           #1f1f25;   /* Mid-level containers                   */
+  --surface-container-high:      #2a292f;   /* Primary UI panels (raised)             */
+  --surface-container-highest:   #36343c;   /* Active items, topmost solid surfaces   */
+
+  /* ──────────────────────────────────────────────
+     PRIMARY ACCENT  ("Electric Indigo")
+     ────────────────────────────────────────────── */
+
+  --primary:                     #cabeff;   /* Signature glow / beacon of activity    */
+  --primary-container:           #947dff;   /* Gradient start — CTA buttons           */
+  --on-primary:                  #1e0086;   /* Text/icons on primary fills            */
+  --on-primary-container:        #e8deff;   /* Text on primary-container              */
+  --inverse-primary:             #613de0;   /* Gradient end — CTA buttons             */
+
+  /* CTA Button Gradient (135°) */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary-container) 0%,
+    var(--inverse-primary)   100%
+  );
+
+  /* ──────────────────────────────────────────────
+     SECONDARY  (Supporting tones)
+     ────────────────────────────────────────────── */
+
+  --secondary:                   #cac4d9;
+  --secondary-container:         #4a4458;
+  --on-secondary:                #322f40;
+  --on-secondary-container:      #e7dff8;
+
+  /* ──────────────────────────────────────────────
+     TERTIARY  (Complementary accent)
+     ────────────────────────────────────────────── */
+
+  --tertiary:                    #efb8c8;
+  --tertiary-container:          #633b48;
+  --on-tertiary:                 #3b0921;
+  --on-tertiary-container:       #ffd9e3;
+
+  /* ──────────────────────────────────────────────
+     SEMANTIC — Error / Warning / Success
+     ────────────────────────────────────────────── */
+
+  --error:                       #ffb4ab;
+  --error-container:             #93000a;
+  --on-error:                    #690005;
+  --on-error-container:          #ffdad6;
+
+  --warning:                     #ffb95f;
+  --warning-container:           #7a4300;
+  --on-warning:                  #4a2800;
+  --on-warning-container:        #ffddb9;
+
+  --success:                     #6fd98d;
+  --success-container:           #0a4f28;
+  --on-success:                  #003916;
+  --on-success-container:        #8bf5a7;
+
+  /* ──────────────────────────────────────────────
+     ON-SURFACE  (Text & icon tokens)
+     ────────────────────────────────────────────── */
+
+  --on-surface:                  #e4e1e9;   /* High-contrast text  (never pure white) */
+  --on-surface-variant:          #c9c4d8;   /* Secondary labels, captions             */
+  --on-surface-muted:            #8f8a9d;   /* Disabled / placeholder text            */
+  --on-surface-subtle:           #5c5870;   /* Barely-there hints                     */
+
+  /* ──────────────────────────────────────────────
+     OUTLINE  (Ghost Border tokens)
+     ────────────────────────────────────────────── */
+
+  --outline:                     #948f9f;   /* Standard accessible outline            */
+  --outline-variant:             #484555;   /* Ghost border base color                */
+
+  /* Ghost Border — 15% opacity, barely perceptible */
+  --ghost-border: 1px solid rgba(72, 69, 85, 0.15);
+
+  /* Focus ring — primary glow */
+  --focus-border: 1px solid rgba(202, 190, 255, 0.6);
+  --focus-glow:   0 0 0 4px rgba(202, 190, 255, 0.12);
+
+  /* ──────────────────────────────────────────────
+     COLLABORATION  (Cursor & presence colors)
+     ────────────────────────────────────────────── */
+
+  --collab-1:  #7c5cfc;   /* Indigo   */
+  --collab-2:  #e879a0;   /* Rose     */
+  --collab-3:  #38bdf8;   /* Sky      */
+  --collab-4:  #34d399;   /* Emerald  */
+  --collab-5:  #fbbf24;   /* Amber    */
+  --collab-6:  #f97316;   /* Orange   */
+
+  /* Active user chip glow */
+  --collab-glow-size:   4px;
+  --collab-glow-spread: 2px;
+
+  /* ──────────────────────────────────────────────
+     GLASSMORPHISM  (Floating layer tokens)
+     ────────────────────────────────────────────── */
+
+  --glass-bg-idle:    rgba(14, 14, 19, 0.60);   /* Toolbar at rest             */
+  --glass-bg-hover:   rgba(14, 14, 19, 0.80);   /* Toolbar on hover            */
+  --glass-bg-modal:   rgba(14, 14, 19, 0.70);   /* Modals / overlays           */
+  --glass-blur:       blur(32px);                /* Floating toolbars           */
+  --glass-blur-modal: blur(24px);                /* Modal backdrops             */
+
+  /* ──────────────────────────────────────────────
+     ELEVATION & SHADOW
+     ────────────────────────────────────────────── */
+
+  /* Reserved ONLY for truly floating elements (modals, context menus) */
+  --shadow-float:   0px 24px 48px rgba(0, 0, 0, 0.40);
+
+  /* Subtle ambient lift for cards */
+  --shadow-ambient: 0px 8px 24px rgba(0, 0, 0, 0.24);
+
+  /* ──────────────────────────────────────────────
+     SPACING SCALE
+     ────────────────────────────────────────────── */
+
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+
+  /* ──────────────────────────────────────────────
+     BORDER RADIUS
+     ────────────────────────────────────────────── */
+
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;    /* Primary buttons      */
+  --radius-full: 9999px;  /* Pills / chips        */
+
+  /* ──────────────────────────────────────────────
+     TYPOGRAPHY — Inter (UI voice)
+     ────────────────────────────────────────────── */
+
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Display — editorial impact, empty states */
+  --text-display-lg:    3.5rem;     /* 56px */
+  --text-display-md:    2.75rem;    /* 44px */
+  --text-display-sm:    2.25rem;    /* 36px */
+
+  /* Headline */
+  --text-headline-lg:   2rem;       /* 32px */
+  --text-headline-md:   1.75rem;    /* 28px */
+  --text-headline-sm:   1.5rem;     /* 24px */
+
+  /* Title */
+  --text-title-lg:      1.25rem;    /* 20px */
+  --text-title-md:      1.125rem;   /* 18px */
+  --text-title-sm:      1rem;       /* 16px */
+
+  /* Body */
+  --text-body-lg:       1rem;       /* 16px */
+  --text-body-md:       0.875rem;   /* 14px — standard UI density */
+  --text-body-sm:       0.8125rem;  /* 13px */
+
+  /* Label */
+  --text-label-lg:      0.875rem;   /* 14px */
+  --text-label-md:      0.8125rem;  /* 13px */
+  --text-label-sm:      0.75rem;    /* 12px — monospace metadata */
+
+  /* ──────────────────────────────────────────────
+     LETTER SPACING
+     ────────────────────────────────────────────── */
+
+  --tracking-tight:     -0.02em;   /* Display scales         */
+  --tracking-normal:     0em;
+  --tracking-wide:       0.05em;
+  --tracking-widest:     0.1em;    /* Mono metadata, all-caps */
+
+  /* ──────────────────────────────────────────────
+     LINE HEIGHT
+     ────────────────────────────────────────────── */
+
+  --leading-tight:    1.2;
+  --leading-snug:     1.35;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.65;
+
+  /* ──────────────────────────────────────────────
+     FONT WEIGHT
+     ────────────────────────────────────────────── */
+
+  --weight-light:     300;
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+
+  /* ──────────────────────────────────────────────
+     TRANSITIONS
+     ────────────────────────────────────────────── */
+
+  --duration-fast:    100ms;
+  --duration-base:    180ms;
+  --duration-slow:    320ms;
+  --duration-slower:  480ms;
+
+  --ease-default:     cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring:      cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:         cubic-bezier(0, 0, 0.2, 1);
+  --ease-in:          cubic-bezier(0.4, 0, 1, 1);
+
+  --transition-base:  var(--duration-base) var(--ease-default);
+  --transition-slow:  var(--duration-slow) var(--ease-default);
+
+  /* ──────────────────────────────────────────────
+     LAYOUT
+     ────────────────────────────────────────────── */
+
+  --sidebar-width:        52px;    /* Icon-only left sidebar     */
+  --right-panel-width:    280px;   /* Collapsible collab panel   */
+  --topbar-height:        52px;
+  --toolbar-height:       48px;
+  --editor-max-width:     720px;   /* Centered text editor col   */
+  --status-bar-height:    28px;
+
+  /* ──────────────────────────────────────────────
+     Z-INDEX SCALE
+     ────────────────────────────────────────────── */
+
+  --z-base:       0;
+  --z-raised:     10;
+  --z-dropdown:   100;
+  --z-sticky:     200;
+  --z-overlay:    300;
+  --z-modal:      400;
+  --z-toast:      500;
+  --z-tooltip:    600;
+
+  /* ──────────────────────────────────────────────
+     WHITEBOARD
+     ────────────────────────────────────────────── */
+
+  /* Dot-grid pattern — subtle, cool-toned */
+  --canvas-bg:           var(--background);
+  --canvas-dot-color:    rgba(202, 190, 255, 0.07);
+  --canvas-dot-size:     1.5px;
+  --canvas-dot-spacing:  24px;
+
+  /* ──────────────────────────────────────────────
+     STATUS INDICATORS
+     ────────────────────────────────────────────── */
+
+  --status-live:      #6fd98d;   /* Pulsing green — connected   */
+  --status-offline:   #5c5870;   /* Grey — disconnected         */
+  --status-syncing:   #ffb95f;   /* Amber — saving / syncing    */
+
+  /* ──────────────────────────────────────────────
+     RBAC ROLE BADGES
+     ────────────────────────────────────────────── */
+
+  --role-owner:    rgba(124, 92, 252, 0.18);
+  --role-editor:   rgba(56, 189, 248, 0.14);
+  --role-viewer:   rgba(148, 163, 184, 0.12);
+
+  --role-owner-text:   #a78bfa;
+  --role-editor-text:  #7dd3fc;
+  --role-viewer-text:  #94a3b8;
+
+}
+
+/* ============================================================
+   BASE RESET & GLOBAL DEFAULTS
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--on-surface);
+  background-color: var(--background);
+  overflow: hidden;           /* App shell — individual panels scroll */
+}
+
+/* Scrollbar — minimal, accent tinted */
+::-webkit-scrollbar               { width: 6px; height: 6px; }
+::-webkit-scrollbar-track         { background: transparent; }
+::-webkit-scrollbar-thumb         { background: var(--surface-container-high); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover   { background: rgba(202, 190, 255, 0.25); }
+
+/* Selection highlight */
+::selection {
+  background: rgba(124, 92, 252, 0.30);
+  color: var(--on-surface);
+}
+
+/* Focus ring — ghost glow, no harsh outlines */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow);
+}
