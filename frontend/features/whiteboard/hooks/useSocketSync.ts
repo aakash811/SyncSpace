@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useWhiteboardStore } from "../store/whiteboard.store";
 import { getSocket } from "@/lib/socket";
+import { useAuthStore } from "@/features/auth/hooks/useAuthStore";
 
 export const useSocketSync = (boardId: string) => {
     const setShapes = useWhiteboardStore((state) => state.setShapes);
-    const socket = getSocket();
+    const token = useAuthStore((state) => state.token);
+    const socket = getSocket(token || undefined);
 
     useEffect(() => {
         //JOIN BOARD

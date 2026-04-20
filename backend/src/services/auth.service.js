@@ -20,7 +20,8 @@ export const signupService = async ({name, email, password}) => {
         }
     })
 
-    return user;
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
 }
 
 export const loginService = async ({email, password}) => {
@@ -38,5 +39,6 @@ export const loginService = async ({email, password}) => {
         throw new Error("Invalid credentials. Please try again.");
     }
 
-    return user;
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
 }

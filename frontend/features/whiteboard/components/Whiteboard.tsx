@@ -4,13 +4,13 @@ import { Stage, Layer, Rect, Line, Circle } from "react-konva";
 import { useWhiteboardStore } from "../store/whiteboard.store";
 import { useSocketSync } from "../hooks/useSocketSync";
 import { getSocket } from "@/lib/socket";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Shape } from "../types";
-import { emit } from "process";
+import { useAuthStore } from "@/features/auth/hooks/useAuthStore";
 
-export default function Whiteboard() {
-  const socket = getSocket();
-  const boardId = "06d5d534-b31b-44f8-b914-13c5862d4b68";
+export default function Whiteboard({ boardId }: { boardId: string }) {
+  const token = useAuthStore((s) => s.token);
+  const socket = getSocket(token || undefined);
 
   const shapes = useWhiteboardStore((state) => state.shapes);
   const tool = useWhiteboardStore((state) => state.tool);
@@ -20,17 +20,27 @@ export default function Whiteboard() {
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
+  const [stageSize, setStageSize] = useState({ width: 800, height: 500 });
+  const emitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useSocketSync(boardId);
 
-  let emitTimeout: any;
-  const emitUpdate = (data: any) => {
-    if (emitTimeout) return;
+  useEffect(() => {
+    const updateSize = () => {
+      setStageSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
-    emitTimeout = setTimeout(() => {
+  const emitUpdate = (data: any) => {
+    if (emitTimeoutRef.current) return;
+
+    emitTimeoutRef.current = setTimeout(() => {
       socket.emit("STATE_UPDATE", data);
-      emitTimeout = null;
-    }, 50); // 20 FPS-ish
+      emitTimeoutRef.current = null;
+    }, 50);
   };
 
   // ✏️ START DRAWING
@@ -44,10 +54,18 @@ export default function Whiteboard() {
 
     if(tool === "eraser"){
       const clickedShape = e.target;
+      if (clickedShape === stage) return; // clicked on empty area
 
-      const index = shapes.findIndex((shape, i) => {
+      const index = shapes.findIndex((_shape, i) => {
         return clickedShape === e.target;
-      })
+      });
+
+      if (index !== -1) {
+        const updatedShapes = shapes.filter((_, i) => i !== index);
+        setShapes(updatedShapes);
+        emitUpdate({ boardId, state: { shapes: updatedShapes } });
+      }
+      return;
     }
     setIsDrawing(true);
 
@@ -199,12 +217,12 @@ export default function Whiteboard() {
 
   return (
     <Stage
-      width={800}
-      height={500}
+      width={stageSize.width}
+      height={stageSize.height}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      style={{ border: "1px solid black" }}
+      className="cursor-crosshair"
     >
       <Layer>
         {shapes.map((shape: any, i: number) => {

@@ -1,14 +1,16 @@
 "use client";
 
-import Whiteboard from "@/features/whiteboard/components/Whiteboard";
-import Toolbar from "@/features/whiteboard/components/Toolbar";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/features/auth/hooks/useAuthStore";
 
 export default function Home() {
-  return (
-    <div>
-      <h1>Whiteboard</h1>
-      <Toolbar />
-      <Whiteboard />
-    </div>
-  );
+  const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+
+  useEffect(() => {
+    router.push(token ? "/dashboard" : "/login");
+  }, [token]);
+
+  return null;
 }

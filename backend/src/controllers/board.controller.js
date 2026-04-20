@@ -58,8 +58,6 @@ export const joinBoard = async (req, res) => {
       userId: req.user.userId, 
     });
 
-    console.log("JOIN USER:", req.user);
-
     res.json(board);
   } catch (err) {
     res.status(400).json({ error: err.message });
