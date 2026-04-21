@@ -9,20 +9,29 @@ export const useSocketSync = (boardId: string) => {
     const socket = getSocket(token || undefined);
 
     useEffect(() => {
-        //JOIN BOARD
-        socket.emit("JOIN_BOARD", {boardId});
+        const joinBoard = () => {
+            socket.emit("JOIN_BOARD", { boardId });
+        };
 
-        //INITIAL STATE
+        // Join on mount
+        joinBoard();
+
+        // Re-join on reconnect
+        socket.on("connect", joinBoard);
+
+        // Initial state
         socket.on("BOARD_STATE", (state) => {
-            if(state?.shapes) setShapes(state.shapes);
+            if (state?.shapes) setShapes(state.shapes);
         });
 
-        //UPDATES
+        // Updates
         socket.on("STATE_UPDATE", (state) => {
-            if(state?.shapes) setShapes(state.shapes);
+            if (state?.shapes) setShapes(state.shapes);
         });
 
         return () => {
+            socket.emit("LEAVE_BOARD", { boardId });
+            socket.off("connect", joinBoard);
             socket.off("BOARD_STATE");
             socket.off("STATE_UPDATE");
         };

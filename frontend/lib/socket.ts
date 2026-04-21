@@ -7,6 +7,10 @@ export const getSocket = (token?: string) => {
   if (!socket) {
     socket = io(env.SOCKET_URL, {
       auth: { token },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
   }
   return socket;
