@@ -194,7 +194,7 @@ export default function Whiteboard({ boardId }: { boardId: string }) {
 
     setShapes(updatedShapes);
 
-    socket.emit("STATE_UPDATE", {
+    emitUpdate({
       boardId,
       state: { shapes: updatedShapes},
     });

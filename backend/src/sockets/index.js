@@ -1,5 +1,8 @@
 import { initBoardSocket } from "./board.socket.js";
 import jwt from "jsonwebtoken";
+import { createSocketRateLimiter } from "../middleware/socketRateLimit.middleware.js";
+
+const rateLimiter = createSocketRateLimiter({ maxEvents: 60, windowMs: 1000 });
 
 export const initSockets = (io) => {
   // Authenticate socket connections via JWT
@@ -19,6 +22,11 @@ export const initSockets = (io) => {
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id, "userId:", socket.user.userId);
+
+    // Apply rate limiter to all incoming events
+    socket.use((packet, next) => {
+      rateLimiter(socket, next);
+    });
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
