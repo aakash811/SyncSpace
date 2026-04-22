@@ -1,6 +1,7 @@
 import { initBoardSocket } from "./board.socket.js";
 import jwt from "jsonwebtoken";
 import { createSocketRateLimiter } from "../middleware/socketRateLimit.middleware.js";
+import { handleCursor } from "./handlers/presence.handler.js";
 
 const rateLimiter = createSocketRateLimiter({ maxEvents: 60, windowMs: 1000 });
 
@@ -33,5 +34,6 @@ export const initSockets = (io) => {
     });
 
     initBoardSocket(io, socket);
+    handleCursor(io, socket);
   });
 };

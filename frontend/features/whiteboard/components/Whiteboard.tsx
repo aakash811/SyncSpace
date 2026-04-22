@@ -1,27 +1,50 @@
 "use client";
 
-import { Stage, Layer, Rect, Line, Circle } from "react-konva";
+import { Stage, Layer, Rect, Line, Circle, Text } from "react-konva";
 import { useWhiteboardStore } from "../store/whiteboard.store";
 import { useSocketSync } from "../hooks/useSocketSync";
 import { getSocket } from "@/lib/socket";
 import { useState, useRef, useEffect } from "react";
 import { Shape } from "../types";
 import { useAuthStore } from "@/features/auth/hooks/useAuthStore";
+import { X } from "lucide-react";
+import { usePresenceStore } from "@/features/board/store/presence.store";
+import { getuserColor } from "@/features/board/utils/color";
+import { emit } from "process";
 
 export default function Whiteboard({ boardId }: { boardId: string }) {
-  const token = useAuthStore((s) => s.token);
+  const { token, user } = useAuthStore();
   const socket = getSocket(token || undefined);
+  const userId = user?.id || "unknown";
 
   const shapes = useWhiteboardStore((state) => state.shapes);
   const tool = useWhiteboardStore((state) => state.tool);
   const color = useWhiteboardStore((state) => state.color);
   const strokeWidth = useWhiteboardStore((state) => state.strokeWidth);
   const setShapes = useWhiteboardStore((state) => state.setShapes);
+  const cursorsMap = usePresenceStore((state) => state.cursors);
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
   const [stageSize, setStageSize] = useState({ width: 800, height: 500 });
   const emitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const displayRef = useRef<Record<string, { x: number; y: number }>>({});
+  
+  const cursorColor  = getuserColor(userId);
+  const cursors = Object.values(cursorsMap);
+  
+  const emitCursor = (data: any) => {
+    if(emitTimeoutRef.current) return;
+
+    emitTimeoutRef.current = setTimeout(() => {
+      socket.emit("CURSOR_MOVE", data);
+      emitTimeoutRef.current = null;
+    }, 30);
+  };
+
+  const lerp = (a: number, b: number, t: number) => {
+    return a + (b - a) * t;
+  };
 
   useSocketSync(boardId);
 
@@ -33,6 +56,27 @@ export default function Whiteboard({ boardId }: { boardId: string }) {
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
   }, []);
+
+  useEffect(() => {
+    let raf: number;
+
+    const tick = () => {
+      const next = { ...displayRef.current };
+      Object.values(cursors).forEach((c: any) => {
+        const prev = next[c.userId] || { x: c.x, y: c.y };
+        next[c.userId] = {
+          x: lerp(prev.x, c.x, 0.35),
+          y: lerp(prev.y, c.y, 0.35),
+        };
+      });
+
+      displayRef.current = next;
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [cursors]);
 
   const emitUpdate = (data: any) => {
     if (emitTimeoutRef.current) return;
@@ -124,6 +168,16 @@ export default function Whiteboard({ boardId }: { boardId: string }) {
 
     const lastShape = shapes[shapes.length - 1];
     if (!lastShape) return;
+
+    //CURSOR SYNC
+    emitCursor({
+      boardId, 
+      x: point.x,
+      y: point.y,
+      userId,
+      name: user?.name,
+      color: cursorColor,
+    })
 
     //PEN TOOL
     if(tool === "pen" && lastShape.tool === "pen") {
@@ -225,36 +279,65 @@ export default function Whiteboard({ boardId }: { boardId: string }) {
       className="cursor-crosshair"
     >
       <Layer>
+
+        {Object.entries(displayRef.current).map(([uid, pos]) => {
+          const user = cursors.find((c: any) => c.userId === uid);
+          if (!user) return null;
+
+          return (
+            <>
+              <Circle
+                key={`dot-${uid}`}
+                x={pos.x}
+                y={pos.y}
+                radius={4}
+                fill={user.color}
+              />
+              <Text
+                key={`label-${uid}`}
+                x={pos.x + 8}
+                y={pos.y + 8}
+                text={user.name || uid.slice(0, 6)}
+                fontSize={12}
+                fill={user.color}
+              />
+            </>
+          );
+        })}
+
+        {/* 🎨 Shapes */}
         {shapes.map((shape: any, i: number) => {
-          if(shape.tool === "pen") {
+          if (shape.tool === "pen") {
             return (
               <Line
-              key={i}
-              points={shape.points}
-              stroke={shape.stroke}
-              strokeWidth={shape.strokeWidth}
-              tension={0.5}
-              lineCap="round"
-              onClick={() => handleErase(i)}
+                key={i}
+                points={shape.points}
+                stroke={shape.stroke}
+                strokeWidth={shape.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                onClick={() => handleErase(i)}
               />
             );
           }
-          if(shape.tool === "circle") {
+
+          if (shape.tool === "circle") {
             return (
-            <Circle 
-              key={i} 
-              {...shape} 
-              draggable={tool === "select"}
-              onDragEnd={(e) => handleDragEnd(e, i)}
-              onClick={() => handleErase(i)}
-            />
+              <Circle
+                key={i}
+                {...shape}
+                draggable={tool === "select"}
+                onDragEnd={(e) => handleDragEnd(e, i)}
+                onClick={() => handleErase(i)}
+              />
             );
           }
+
           return (
-            <Rect 
-              key={i} 
-              {...shape} 
-              draggable={tool === "select"} 
+            <Rect
+              key={i}
+              {...shape}
+              draggable={tool === "select"}
               onDragEnd={(e) => handleDragEnd(e, i)}
               onClick={() => handleErase(i)}
             />

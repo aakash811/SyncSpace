@@ -9,6 +9,7 @@ import CodeEditor from "@/features/code-editor/components/CodeEditor";
 import TextEditor from "@/features/text-editor/components/TextEditor";
 import { getSocket } from "@/lib/socket";
 import { PenLine, Code2, ArrowLeft, FileText } from "lucide-react";
+import ActiveUsers from "@/features/board/components/ActiveUsers"; 
 
 type Tab = "whiteboard" | "code" | "notes";
 type ConnectionStatus = "connected" | "disconnected" | "reconnecting";
@@ -118,6 +119,7 @@ export default function BoardPage() {
         {activeTab === "whiteboard" && (
           <>
             <Toolbar />
+            <ActiveUsers />
             <Whiteboard boardId={boardId} />
           </>
         )}
